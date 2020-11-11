@@ -1,0 +1,38 @@
+﻿@model List<WebApp.Models.Owner>
+@{
+    ViewBag.Title = "Таблица владельцев";
+}
+
+@ViewBag.Title
+:
+<div>
+    <table border="1">
+        <thead>
+            <tr>
+                <td>
+                    Id
+                </td>
+                <td>
+                    ФИО
+                </td>
+                <td>
+                    Телефон
+                </td>
+            </tr>
+        </thead>
+        @foreach (var elem in Model)
+        {
+            <tr>
+                <td>
+                    @elem.Id
+                </td>
+                <td>
+                    @elem.Fio
+                </td>
+                <td>
+                    @elem.NameFone
+                </td>
+            </tr>
+        }
+    </table>
+</div>

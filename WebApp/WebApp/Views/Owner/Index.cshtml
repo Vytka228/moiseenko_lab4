@@ -1,0 +1,83 @@
+﻿@model WebApp.Models.OwnerViewModel
+@{
+    ViewBag.Title = "Таблица владельцев";
+}
+<script>
+    function SetSession() {
+        sessionStorage.setItem("fone", $("#1").val());
+    }
+    function GetSession() {
+        $("#1").val(sessionStorage.getItem("fone"));
+</script>
+
+<body onbeforeunload="SetSession()" onload="GetSession()">
+    <H1>@ViewBag.Title:</H1>
+    <form method="get">
+        <div>
+            <label class="control-label">Номер телефона:&nbsp;</label>
+            <input name="fone" id="1" class="form-control" />
+        </div>
+        <br />
+        <div>
+            <input type="submit" style="border-color:black;" value="Фильтрация" class="btn btn-default" />
+        </div>
+    </form>
+    <br />
+    <table border="1">
+        <thead>
+            <tr>
+                <td>
+                    Id
+                </td>
+                <td>
+                    ФИО
+                </td>
+                <td>
+                    Телефон
+                </td>
+            </tr>
+        </thead>
+        @foreach (var elem in Model.Owners)
+        {
+            <tr>
+                <td>
+                    @elem.Id
+                </td>
+                <td>
+                    @elem.Fio
+                </td>
+                <td>
+                    @elem.NameFone
+                </td>
+            </tr>
+        }
+    </table>
+    <br />
+    @if (Model.PageViewModel.HasPreviousPage)
+    {
+        <a asp-action="Index"
+           asp-route-page="@(Model.PageViewModel.PageNumber - 1)"
+           class="btn btn-outline-dark" style="border-color:black;">
+            <i class="glyphicon glyphicon-chevron-left"></i>
+            Назад
+        </a>
+    }
+    @if (Model.PageViewModel.HasNextPage)
+    {
+        <a asp-action="Index"
+           asp-route-page="@(Model.PageViewModel.PageNumber + 1)"
+           class="btn btn-outline-dark" style="border-color:black;">
+            Вперед
+            <i class="glyphicon glyphicon-chevron-right"></i>
+        </a>
+    }
+    <br />
+    @if (User.IsInRole("Администратор"))
+    {
+        <div>
+            @Html.ActionLink("Добавить запись", "AddOwner", "Owner")
+            @Html.ActionLink("Удалить запись", "DeleteOwner", "Owner")
+            @Html.ActionLink("Изменить запись", "UpdateOwner", "Owner")
+        </div>
+    }
+</body>

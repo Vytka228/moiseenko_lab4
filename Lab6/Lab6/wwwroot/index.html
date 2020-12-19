@@ -1,0 +1,233 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Архив парковочных мест</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.0/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
+    <script src="lib/jquery/dist/jquery.js"></script>
+    <link href="lib/jquery-ui/themes/base/jquery-ui.min.css" rel="stylesheet" />
+    <script src="lib/jquery-ui/jquery-ui.js"></script>
+    <script src="lib/jquery-ui/ui/i18n/datepicker-ru.js"></script>
+</head>
+<body>
+    <h2 style="margin-left:15px; margin-top:15px;">Архив парковок</h2>
+    <form name="parkingForm">
+        <input type="hidden" name="id" id="id" value="0" />
+        <table border="0">
+            <tr>
+                <td>
+                    <div style="margin-left:15px;">
+                        <label for="type">Тип парковки:</label>
+                        <input class="form-control" name="type" id="type" />
+                    </div>
+                    <div style="margin-left:15px; margin-top:15px;">
+                        <label for="dateEntry">Дата заезда:</label>
+                        <input class="form-control" name="dateEntry" id="dateEntry" />
+                    </div>
+                </td>
+                <td>
+                    <div style="margin-left:15px;">
+                        <label for="dateDep">Дата выезда:</label>
+                        <input class="form-control" name="dateDep" id="dateDep" />
+                    </div>
+                    <div style="margin-left:15px; margin-top:15px;">
+                        <label for="car">Номер машины:</label>
+                        <select class="form-control" name="car" id="car"></select>
+                    </div>
+                </td>
+                <td>
+                    <div style="margin-left:15px;">
+                        <label for="price">Цена:</label>
+                        <input class="form-control" name="price" id="price" />
+                    </div>
+                    <div style="margin-left:15px; margin-top:15px;">
+                        <label for="staff">ФИО сотрудника:</label>
+                        <select class="form-control" name="staff" id="staff"></select>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        <div style="margin: 15px 0 15px 15px;">
+            <button id="submit" class="btn btn-primary" onclick="Save()">Сохранить</button>
+            <a id="reset" class="btn btn-primary" onclick="reset()">Сбросить</a>
+        </div>
+    </form>
+    <table class="table table-condensed table-striped  col-md-6">
+        <thead><tr><th>Id</th><th>Тип парковки</th><th>Дата заезда</th><th>Дата выезда</th><th>Номер машины</th><th>Цена</th><th>ФИО сотрудника</th><th></th></tr></thead>
+        <tbody id="data">
+        </tbody>
+    </table>
+    <script>
+        // Получение всех мест парковки
+        async function GetParkings() {
+            $.ajax({
+                url: '/api/parkings',
+                type: 'GET',
+                contentType: "application/json",
+                success: function (parkings) {
+                    var rows = "";
+                    $.each(parkings, function (index, parking) {
+                        // добавляем полученные элементы в таблицу
+                        rows += row(parking);
+                    })
+                    $("table tbody#data").append(rows);
+                }
+            });
+        }
+        // Получение данных для списков
+        async function GetCars() {
+            var listItems = "";
+            $.ajax({
+                url: '/api/parkings/car',
+                type: 'GET',
+                contentType: "application/json",
+                success: function (cars) {
+                    $.each(cars, function (index, car) {
+                        listItems = listItems + "<option value='" + car.id + "'>" + car.numberofthecar + "</option>";
+                    });
+                    $("#car").html(listItems);
+                }
+            });
+        }
+        // Получение данных для списков
+        async function GetStaffs() {
+            var listItems = "";
+            $.ajax({
+                url: '/api/parkings/staff',
+                type: 'GET',
+                contentType: "application/json",
+                success: function (staffs) {
+                    $.each(staffs, function (index, staff) {
+                        listItems = listItems + "<option value='" + staff.id + "'>" + staff.fioStaffs + "</option>";
+                    });
+                    $("#staff").html(listItems);
+                }
+            });
+        }
+        // Получение одного места парковки
+        function GetParking(id) {
+            $.ajax({
+                url: '/api/parkings/' + id,
+                type: 'GET',
+                contentType: "application/json",
+                success: function (parking) {
+                    var form = document.forms["parkingForm"];
+                    form.elements["id"].value = parking.id;
+                    form.elements["type"].value = parking.typeParking;
+                    form.elements["dateEntry"].value = parking.dateentry.substring(0, 10);
+                    form.elements["dateDep"].value = parking.datedeparture.substring(0, 10);
+                    form.elements["car"].selectedValue = parking.carsNumber;
+                    form.elements["price"].value = parking.price;
+                    form.elements["staff"].selectedValue = parking.staffFIO;
+                }
+            });
+        }
+        // Добавление пользователя
+        function CreateParking(type, dateEntry, dateDep, carId, price, staff) {
+            $.ajax({
+                url: "api/parkings",
+                contentType: "application/json",
+                method: "POST",
+                data: JSON.stringify({
+                    Id: 0,
+                    typeParking: type,
+                    dateentry: dateEntry,
+                    datedeparture: dateDep,
+                    carsId: parseInt(carId, 10),
+                    price: parseFloat(price),
+                    staffsId: parseInt(staff, 10)
+                }),
+                success: function (parking) {
+                    reset();
+                    $("table tbody#data").append(row(parking));
+                },
+                error: function () {
+                    alert("Error");
+                }
+            });
+        }
+        // Изменение пользователя
+        async function EditParking(id, type, dateEntry, dateDep, carId, price, staff) {
+            $.ajax({
+                url: "api/parkings",
+                contentType: "application/json",
+                method: "PUT",
+                data: JSON.stringify({
+                    Id: parseInt(id, 10),
+                    typeParking: type,
+                    dateentry: dateEntry,
+                    datedeparture: dateDep,
+                    carsId: parseInt(carId, 10),
+                    price: parseFloat(price),
+                    staffsId: parseInt(staff, 10)
+                }),
+                success: function (parking) {
+                    reset();
+                    document.querySelector("tr[data-rowid='" + parking.id + "']").replaceWith(row(parking));
+                },
+                error: function () {
+                    alert("Error");
+                }
+            });
+        }
+        // Удаление пользователя
+        async function DeleteParking(id) {
+            $.ajax({
+                url: "api/parkings/" + id,
+                contentType: "application/json",
+                method: "DELETE",
+                success: function (id) {
+                    $("tr[data-rowid='" + id + "']").remove();
+                }
+            });
+        }
+
+        // сброс формы
+        function reset() {
+            const form = document.forms["parkingForm"];
+            form.reset();
+            form.elements["id"].value = 0;
+        }
+        // создание строки для таблицы
+                var row = function (parking) {
+                    return "<tr data-rowid='" + parking.id + "'><td>" + parking.id + "</td > <td>" + parking.typeParking + "</td>" +
+                        "<td>" + parking.dateentry.substring(0,10) + "</td>" +
+                        "<td>" + parking.datedeparture.substring(0, 10) + "</td>" +
+                        "<td>" + parking.carsNumber + "</td>" +
+                        "<td>" + parking.price + "</td>" +
+                        "<td>" + parking.staffFIO + "</td>" +
+                        "<td><button onclick='GetParking(" + parking.id + ")'>Изменить</button> | " +
+                        "<button onclick='DeleteParking(" + parking.id + ")'>Удалить</button></td></tr>";
+        }
+        // сброс значений формы
+        document.getElementById("reset").click(function (e) {
+            e.preventDefault();
+            reset();
+        })
+
+        // отправка формы
+        function Save() {
+            const form = document.forms["parkingForm"];
+            const id = form.elements["id"].value;
+            const type = form.elements["type"].value;
+            const dateEntry = form.elements["dateEntry"].value;
+            const dateDep = form.elements["dateDep"].value;
+            const carId = $("#car option:selected").val();
+            const price = form.elements["price"].value;
+            const staff = $("#staff option:selected").val();
+            if (id == 0)
+                CreateParking(type, dateEntry, dateDep, carId, price, staff);
+            else
+                EditParking(id, type, dateEntry, dateDep, carId, price, staff);
+        }
+
+        // загрузка накладных
+        GetParkings();
+        GetCars();
+        GetStaffs();
+
+    </script>
+</body>
+</html>
